@@ -60,7 +60,7 @@ if isfield(SWIFT,'windspd') && any(~isnan([SWIFT.windspd])),
     plot( [SWIFT.time],[SWIFT.windspd],'bx','linewidth',2)
     datetick;
     ylabel('Wind [m/s]')
-    set(gca,'Ylim',[0 ceil(max([SWIFT.windspd]))] )
+    set(gca,'Ylim',[0 20])% ceil(max([SWIFT.windspd]))] )
 end %if
 
 if isfield(SWIFT,'sigwaveheight')
@@ -68,7 +68,7 @@ if isfield(SWIFT,'sigwaveheight')
     plot( [SWIFT.time],[SWIFT.sigwaveheight],'g+','linewidth',2)
     datetick;
     ylabel('Wave H_s [m]')
-    set(gca,'Ylim',[0 ceil(max([SWIFT.sigwaveheight]))] )
+    set(gca,'Ylim',[0 inf])%ceil(max([SWIFT.sigwaveheight]))] )
 end %if
 
 if isfield(SWIFT,'peakwaveperiod')
@@ -79,15 +79,23 @@ if isfield(SWIFT,'peakwaveperiod')
     set(gca,'Ylim',[0 20])
 end %if 
 
-if isfield(SWIFT,'winddirT') && isfield(SWIFT,'peakwavedirT')
+if isfield(SWIFT,'peakwavedirT')
     ax(4) = subplot(n,1,4);
-    plot([SWIFT.time],[SWIFT.winddirT],'bx','linewidth',2), hold on,
     plot([SWIFT.time],[SWIFT.peakwavedirT],'g+','linewidth',2), hold on
     datetick;
     ylabel('directions [^\circ T]')
     set(gca,'Ylim',[0 360])
     set(gca,'YTick',[0 180 360])
-    legend('Wind','Waves');
+end %if
+
+if isfield(SWIFT,'winddirT') 
+    ax(4) = subplot(n,1,4);
+    plot([SWIFT.time],[SWIFT.winddirT],'bx','linewidth',2), hold on
+    datetick;
+    ylabel('directions [^\circ T]')
+    set(gca,'Ylim',[0 360])
+    set(gca,'YTick',[0 180 360])
+    %legend('Wind','Waves');
 end %if
 
 linkaxes(ax,'x')
@@ -119,6 +127,7 @@ if isfield(SWIFT,'watertemp') && isfield(SWIFT,'salinity')
     % number of CT sensors:
     numCT = size(Tarray,2);
     
+    legendlabs = {'0.18 m';'0.66 m';'1.22 m'};
     % Create arrays for assigning makers and legend labels based on numCT:
     namearray =  {'Marker';'Color';'Linestyle'}; 
     if isfield(SWIFT,'CTdepth')
@@ -126,7 +135,6 @@ if isfield(SWIFT,'watertemp') && isfield(SWIFT,'salinity')
             legendlabs{cti,1} = [num2str(SWIFT(1).CTdepth(cti),3) ' m'];
         end
     elseif numCT == 3  
-        legendlabs = {'0.18 m';'0.66 m';'1.22 m'};
         disp('CTdepth field not found: using default SWIFT depths')
     end
     
@@ -228,7 +236,7 @@ if isfield(SWIFT,'wavespectra')
     
     xlabel('freq [Hz]');
     ylabel('Energy [m^2/Hz]');
-    axis([5e-2 7e-1 1e-5 inf])
+    axis([5e-2 7e-1 1e-3 inf])
     title('Scalar wave spectra');
     if isfield(SWIFT,'windspd') &&  ~isnan(max([SWIFT.windspd]))
         WindColorbar = colorbar('Location','East','Ticks',0:0.2:1,'TickLabels',round(linspace(0,max([SWIFT.windspd]),6)*10)/10);
@@ -239,9 +247,9 @@ if isfield(SWIFT,'wavespectra')
     
     % spectrogram
     subplot(2,1,2)
-    if size(t)>1,
+    if length(t)>1,
     pcolor(nanmean(f,1),t,log10(E)), shading flat
-    axis([5e-2 5e-1 min(t) max(t)])
+    axis([5e-2 7e-1 min(t) max(t)])
     xlabel('freq [Hz]');
     datetick('y')
     ylabel('Time -->')

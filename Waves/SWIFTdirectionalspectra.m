@@ -1,4 +1,4 @@
-function [Etheta theta f dir spread spread2 spread2alt] = SWIFTdirectionalspectra(SWIFT, varargin);
+function [Etheta theta E f dir spread spread2 spread2alt] = SWIFTdirectionalspectra(SWIFT, varargin);
 % make directional spectra from a SWIFT data structure
 % which can have multiple spectral results 
 % (and the results will average it)
@@ -10,7 +10,7 @@ function [Etheta theta f dir spread spread2 spread2alt] = SWIFTdirectionalspectr
 % this is intended to be used after post-processing wave data with
 % "reprocess_IMU.m" which uses "XYZwaves.m" to get coefficients
 %
-%    [Etheta theta f dir spread spread2 spread2alt ] = SWIFTdirectionalspectra(SWIFT, plotflag, recip);
+%    [Etheta theta E f dir spread spread2 spread2alt ] = SWIFTdirectionalspectra(SWIFT, plotflag, recip);
 %
 % J. Thomson, 10/2015, based on NCEX codes (J. Thomson, 2002)
 %             4/2016 editted by Fabrice Ardhuin to energy weight coefs in determining average
@@ -58,14 +58,14 @@ for ai = 1:length(SWIFT),
     SWIFT(ai).wavespectra.b2( SWIFT(ai).wavespectra.b2==9999 ) = 0;
 
     
-    %if SWIFT(ai).sigwaveheight > 0 & SWIFT(ai).sigwaveheight < 10,
+    if SWIFT(ai).sigwaveheight > 0 & SWIFT(ai).sigwaveheight < 10 & all(~isnan(SWIFT(ai).wavespectra.a1)),
         E = E + SWIFT(ai).wavespectra.energy;
         a1 = a1 + SWIFT(ai).wavespectra.a1.*SWIFT(ai).wavespectra.energy;
         a2 = a2 + SWIFT(ai).wavespectra.a2.*SWIFT(ai).wavespectra.energy;
         b1 = b1 + SWIFT(ai).wavespectra.b1.*SWIFT(ai).wavespectra.energy;
         b2 = b2 + SWIFT(ai).wavespectra.b2.*SWIFT(ai).wavespectra.energy;
         counter = counter + 1;
-    %else end
+    else end
 end
 
 I=find(E > 0 & isnan(E) ==0);
@@ -105,7 +105,7 @@ dir1 = atan2(b1,a1) ;  % [rad], 4 quadrant
 dir2 = atan2(b2,a2)/2 ; % [rad], only 2 quadrant
 spread1 = sqrt( 2 * ( 1 - sqrt(a1.^2 + b1.^2) ) ); % radians?
 % this is the usual definitionn e.g. OReilly et al. 1996
-spread2 = sqrt( abs( 0.5 - 0.5 .* ( a2.*cos(2.*dir2) + b2.*cos(2.*dir2) )  )); % radians?
+spread2 = sqrt( abs( 0.5 - 0.5 .* ( a2.*cos(2.*dir2) + b2.*sin(2.*dir2) )  )); % radians?
 % Alternatively one can use (this is what is coded in WW3), and can be compared to tiltmeter data (Ardhuin et al. GRL 2016)
 spread2alt = sqrt( abs( 0.5 - 0.5 .* ( a2.^2 + b2.^2 )  )); % radians?
 
@@ -168,7 +168,7 @@ subplot(3,1,1)
 plot(f,E,'k',f,sum(Etheta*dtheta,2),'k--','linewidth',2), hold on
 set(gca,'Fontsize',14,'fontweight','demi')
 ylabel('Energy [m^2/Hz]')
-set(gca,'xlim',[0.05 0.5])
+set(gca,'xlim',[0.05 max(f)])
 title([ wd ', Hs = ' num2str(Hs,2) ' m'],'interpreter','none')
 
 
@@ -176,7 +176,7 @@ subplot(3,1,2)
 errorbar(f,dir,spread,'k','markersize',16,'linewidth',2), hold on
 set(gca,'Fontsize',14,'fontweight','demi')
 ylabel('Dir [deg T]')
-set(gca,'xlim',[0.05 0.5])
+set(gca,'xlim',[0.05 max(f)])
 set(gca,'ylim',[0 360],'YTick',[0 90 180 270 360])
 
 
@@ -186,7 +186,7 @@ set(gca,'Fontsize',14,'fontweight','demi')
 hold on
 plot([min(f) max(f)],[0 0],'k:')
 legend('a1','a2','b1','b2')
-set(gca,'xlim',[0.05 0.5])
+set(gca,'xlim',[0.05 max(f)])
 set(gca,'ylim',[-1 1])
 xlabel('Frequency [Hz]')
 ylabel('Moments []')
